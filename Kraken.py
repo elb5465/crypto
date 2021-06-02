@@ -5,11 +5,10 @@ from time import sleep
 import csv
 from datetime import datetime
 import os
-
+ 
 os.chdir('/Users/elb5465/Desktop/cryptoMarket_analysis/crypto')
-
-
 #Functions below return data from Kraken BTC exchange. Data is packed into dictionaries inside lists inside dictionaries, etc. Functions unpack nested items and convert desired string into float object 
+
 
 
 #parse the data into a list, which can be used each time the functions are called
@@ -95,17 +94,7 @@ def high_today(data_list):
 #Return as float
 def high_24(data_list):    
         return float(data_list[7][1])
-
-        
-#print results from above and now time -- WORKS
-# def print_cases():
-#         while True:
-#                 print(ask_price())
-#                 print(datetime.now())
-#                 print('------------')
-#                 time.sleep(1)
-# print_cases()
-
+ 
 #write results to csv continuously
 #ISSUE -- WRITES SAME NUMBERS OVER AND OVER TO CSV
 def write_to_csv():
@@ -131,12 +120,56 @@ def write_to_csv():
                         writer.writerow(final_data)
                         print(final_data)
                         time.sleep(3)
-                   
+                  
+#write_to_csv()
 
 
-write_to_csv()
- 
-  
+
+def print_askPriceInfo(ask_price_info_dict):
+      print("last: ", ask_price_info_dict["last"],
+            "\nhigh: ", ask_price_info_dict["high"], 
+            "\nlow: ",  ask_price_info_dict["low"])      
+      print()
+
+        
+
+        
+isAskPriceSet = False
+ask_price_info_dict = {"low":-1, "high":-1, "last":-1}
+
+while True:
+    request = requests.get('https://api.kraken.com/0/public/Ticker?pair=XBTUSD')
+    data_list = parse_data(request)
+    curr_askPrice = int(ask_price(data_list))
+
+    #set initial ask price details 
+    if (not isAskPriceSet):
+      ask_price_info_dict["low"]     = curr_askPrice
+      ask_price_info_dict["high"]    = curr_askPrice
+      ask_price_info_dict["last"]    = curr_askPrice
+      isAskPriceSet = True
+      print_askPriceInfo(ask_price_info_dict)
+
+
+    #save data from subsequent requests
+    if (curr_askPrice < ask_price_info_dict["low"]):
+      ask_price_info_dict["low"]  = curr_askPrice
+    if (curr_askPrice > ask_price_info_dict["high"]):
+      ask_price_info_dict["high"] = curr_askPrice
+
+
+    #keep track of dips/bumps
+    if (ask_price_info_dict["last"] < curr_askPrice):
+      print("\n[--------------- bump ---------------]")
+    if (ask_price_info_dict["last"] > curr_askPrice):
+      print("\n[--------------- dip ---------------]")
+    if (ask_price_info_dict["last"] == curr_askPrice):
+      print("...")
+    else:
+      ask_price_info_dict["last"] = curr_askPrice
+      print_askPriceInfo(ask_price_info_dict)
+
+    time.sleep(3)  
 
 
     
